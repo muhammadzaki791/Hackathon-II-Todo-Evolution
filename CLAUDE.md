@@ -1,4 +1,4 @@
-# Claude Code Rules
+﻿# Claude Code Rules
 
 This file is generated during init for the selected agent.
 
@@ -196,15 +196,153 @@ If ALL true, suggest:
 
 Wait for consent; never auto-create ADRs. Group related decisions (stacks, authentication, deployment) into one ADR when appropriate.
 
-## Basic Project Structure
+## Project Structure - Phase II: Full-Stack Web Application
 
-- `.specify/memory/constitution.md` — Project principles
-- `specs/<feature>/spec.md` — Feature requirements
-- `specs/<feature>/plan.md` — Architecture decisions
-- `specs/<feature>/tasks.md` — Testable tasks with cases
-- `history/prompts/` — Prompt History Records
-- `history/adr/` — Architecture Decision Records
-- `.specify/` — SpecKit Plus templates and scripts
+This is a **monorepo** containing both frontend (Next.js) and backend (FastAPI) for the Todo Full-Stack Web Application.
+
+### Directory Layout
+```
+Todo-Web-App/
+├── .specify/                     # Spec-Kit Plus templates and scripts
+│   ├── memory/
+│   │   └── constitution.md       # Project principles
+│   └── templates/
+├── specs/                        # Organized specifications
+│   ├── overview.md               # Project overview
+│   ├── architecture.md           # System architecture
+│   ├── features/                 # Feature specifications
+│   │   ├── task-crud.md
+│   │   └── authentication.md
+│   ├── api/                      # API specifications
+│   │   └── rest-endpoints.md
+│   ├── database/                 # Database specifications
+│   │   └── schema.md
+│   └── ui/                       # UI specifications
+│       ├── components.md
+│       └── pages.md
+├── frontend/                     # Next.js 16+ application
+│   ├── CLAUDE.md                 # Frontend-specific guidelines
+│   ├── app/                      # Next.js App Router
+│   ├── components/               # React components
+│   ├── lib/                      # Utilities and API client
+│   ├── package.json
+│   └── .env.local
+├── backend/                      # FastAPI application
+│   ├── CLAUDE.md                 # Backend-specific guidelines
+│   ├── main.py                   # FastAPI entry point
+│   ├── models.py                 # SQLModel database models
+│   ├── routes/                   # API route handlers
+│   ├── db.py                     # Database connection
+│   ├── auth.py                   # JWT verification middleware
+│   ├── requirements.txt
+│   └── .env
+├── history/
+│   ├── prompts/                  # Prompt History Records
+│   └── adr/                      # Architecture Decision Records
+├── docker-compose.yml
+├── CLAUDE.md                     # Root guidelines (this file)
+└── README.md
+```
+
+### Technology Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 16+ (App Router), TypeScript, Tailwind CSS |
+| Backend | Python FastAPI, SQLModel (ORM) |
+| Database | Neon Serverless PostgreSQL |
+| Authentication | Better Auth (JWT tokens) |
+| Spec-Driven | Spec-Kit Plus + Claude Code |
+
+## Spec-Driven Development Workflow
+
+**CRITICAL RULE: Always read relevant specifications before making any code changes.**
+
+### Workflow Steps
+1. **Read Spec**: Reference specifications with `@specs/features/[feature].md`
+2. **Generate Plan**: Create architectural plan in `specs/[feature]/plan.md`
+3. **Break Into Tasks**: Create task breakdown in `specs/[feature]/tasks.md`
+4. **Implement Backend**: Follow `@backend/CLAUDE.md` guidelines
+5. **Implement Frontend**: Follow `@frontend/CLAUDE.md` guidelines
+6. **Test and Iterate**: Verify against spec acceptance criteria
+
+### Referencing Specs
+- Feature specs: `@specs/features/task-crud.md`
+- API specs: `@specs/api/rest-endpoints.md`
+- Database specs: `@specs/database/schema.md`
+- UI specs: `@specs/ui/components.md`
+
+## Authentication Architecture
+
+### JWT-Based Authentication Flow
+1. **User logs in** → Better Auth (frontend) creates session and issues JWT token
+2. **Frontend API calls** → Include JWT in `Authorization: Bearer <token>` header
+3. **Backend verification** → FastAPI middleware verifies JWT using shared secret
+4. **User identification** → Backend extracts `user_id` from token
+5. **Data isolation** → All queries filtered by authenticated user's ID
+
+### Shared Secret
+Both frontend and backend must use the same `BETTER_AUTH_SECRET` environment variable for JWT signing and verification.
+
+### Security Requirements
+- All API endpoints require valid JWT token
+- Requests without token receive `401 Unauthorized`
+- Each user only sees/modifies their own tasks
+- Task ownership enforced on every operation
+- User ID in URL must match authenticated user ID from token
+
+## API Endpoints
+
+All endpoints are under `/api/{user_id}/` and require JWT authentication:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/{user_id}/tasks` | List all tasks for user |
+| POST | `/api/{user_id}/tasks` | Create a new task |
+| GET | `/api/{user_id}/tasks/{id}` | Get task details |
+| PUT | `/api/{user_id}/tasks/{id}` | Update a task |
+| DELETE | `/api/{user_id}/tasks/{id}` | Delete a task |
+| PATCH | `/api/{user_id}/tasks/{id}/complete` | Toggle task completion |
+
+## Development Commands
+
+### Frontend (Next.js)
+```bash
+cd frontend
+npm install
+npm run dev              # Start dev server (http://localhost:3000)
+npm run build            # Production build
+npm run lint             # Run ESLint
+```
+
+### Backend (FastAPI)
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000  # Start dev server
+pytest                   # Run tests
+```
+
+### Full Stack (Docker Compose)
+```bash
+docker-compose up        # Start both frontend and backend
+docker-compose down      # Stop all services
+```
+
+## Environment Variables
+
+### Frontend (.env.local)
+```env
+BETTER_AUTH_SECRET=your-secret-key-here
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+### Backend (.env)
+```env
+DATABASE_URL=postgresql://user:password@host/database
+BETTER_AUTH_SECRET=your-secret-key-here
+JWT_ALGORITHM=HS256
+```
 
 ## Code Standards
 See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
