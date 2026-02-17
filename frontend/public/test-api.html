@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>API Connection Test</h1>
+    <button onclick="testAPI()">Test Backend Connection</button>
+    <div id="results"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        async function testAPI() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Testing...</p>';
+
+            let html = '';
+
+            // Test 1: Backend Health
+            try {
+                const response = await fetch(`${API_BASE}/`);
+                const data = await response.json();
+                html += `<div class="test-result success">✅ Backend Health: ${response.status} - ${data.message}</div>`;
+            } catch (error) {
+                html += `<div class="test-result error">❌ Backend Health: ${error.message}</div>`;
+            }
+
+            // Test 2: Auth Session (no token)
+            try {
+                const response = await fetch(`${API_BASE}/auth/session`);
+                const data = await response.json();
+                html += `<div class="test-result success">✅ Auth Session: ${response.status} - ${JSON.stringify(data)}</div>`;
+            } catch (error) {
+                html += `<div class="test-result error">❌ Auth Session: ${error.message}</div>`;
+            }
+
+            // Test 3: OpenAPI Docs
+            try {
+                const response = await fetch(`${API_BASE}/docs`);
+                if (response.ok) {
+                    html += `<div class="test-result success">✅ API Docs: ${response.status} - Available at /docs</div>`;
+                } else {
+                    html += `<div class="test-result error">❌ API Docs: ${response.status}</div>`;
+                }
+            } catch (error) {
+                html += `<div class="test-result error">❌ API Docs: ${error.message}</div>`;
+            }
+
+            // Test 4: CORS Check
+            try {
+                const response = await fetch(`${API_BASE}/`, {
+                    method: 'GET',
+                    headers: {
+                        'Origin': 'http://localhost:3000'
+                    }
+                });
+                const corsHeader = response.headers.get('Access-Control-Allow-Origin');
+                if (corsHeader) {
+                    html += `<div class="test-result success">✅ CORS Enabled: ${corsHeader}</div>`;
+                } else {
+                    html += `<div class="test-result error">⚠️ CORS Not Configured</div>`;
+                }
+            } catch (error) {
+                html += `<div class="test-result error">❌ CORS Test: ${error.message}</div>`;
+            }
+
+            resultsDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
